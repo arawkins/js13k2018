@@ -14,7 +14,7 @@ export class Bullet extends Entity {
         ctx.beginPath();
         ctx.fillStyle = this.color;
         ctx.strokeStyle = this.color;
-        ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
+        ctx.arc(this.x, this.y, this.width, 0, 2 * Math.PI);
         ctx.stroke();
         ctx.restore();
     }

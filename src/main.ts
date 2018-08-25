@@ -1,7 +1,9 @@
 import { Keyboard } from './input';
 import { Player } from './player';
+import { Bullet } from './bullet';
 import { Util } from './util';
-import './style.css';
+
+//import './style.css';
 
 const FRICTION:number = 0.9;
 var WIDTH:number = 1280;
@@ -11,12 +13,13 @@ var canvas: HTMLCanvasElement;
 var ctx: CanvasRenderingContext2D;
 var kb: Keyboard;
 var player: Player;
-var bullets: array<Entity>;
-var bulletPool: array<Entity>;
+var bullets: Array<Bullet>;
+var bulletPool: Array<Bullet>;
 
 window.onload = () => {
     player = new Player(WIDTH/2,HEIGHT/2);
     bullets = [];
+    bulletPool = [];
     kb = new Keyboard();
 
     let container = document.createElement('div');
@@ -32,7 +35,6 @@ window.onload = () => {
     ctx = canvas.getContext("2d");
 
     gameLoop();
-
 }
 
 function gameLoop() {
@@ -61,6 +63,20 @@ function gameLoop() {
     player.vy *= FRICTION;
     player.render(ctx);
 
-    
+    bullets.forEach((b) => {
+        b.update();
+        b.render(ctx);
+    });
+}
 
+function fireBullet(startX:number, startY:number, angle:number, speed:number) {
+    let newBullet = null;
+    if (bulletPool.length > 0) {
+        newBullet = bulletPool.pop();
+    } else {
+        newBullet = new Bullet(startX, startY);
+    }
+    newBullet.vx = Math.cos(angle) * speed;
+    newBullet.vy = Math.sin(angle) * speed;
+    bullets.push(newBullet);
 }
