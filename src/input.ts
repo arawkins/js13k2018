@@ -12,7 +12,7 @@ class KeyState {
     public press() {
         if (!this.down) {
             this.down = true;
-            this.downFor = 0;    
+            this.downFor = 0;
         }
     }
 
