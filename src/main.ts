@@ -39,7 +39,6 @@ window.onload = () => {
 
 function gameLoop() {
     requestAnimationFrame(gameLoop);
-    kb.update();
 
     // clear canvas
     ctx.fillStyle = "black";
@@ -48,13 +47,13 @@ function gameLoop() {
     player.ax = 0;
     player.ay = 0;
 
-    if (kb.isDown(Keyboard.LEFT)) {
+    if (kb.isDown("ArrowLeft")) {
         player.moveLeft();
-    } else if (kb.isDown(Keyboard.RIGHT)) {
+    } else if (kb.isDown("ArrowRight")) {
         player.moveRight();
-    } else if (kb.isDown(Keyboard.UP)) {
+    } else if (kb.isDown("ArrowUp")) {
         player.moveUp();
-    } else if (kb.isDown(Keyboard.DOWN)) {
+    } else if (kb.isDown("ArrowDown")) {
         player.moveDown();
     }
 
