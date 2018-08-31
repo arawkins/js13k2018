@@ -1,6 +1,6 @@
 import { Entity } from './entity';
 
-export class Enemy extends Entity {
+export class Turret extends Entity {
 
     private rateOfFire:number = 30;
     private fireCounter:number = 0;

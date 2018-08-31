@@ -1,7 +1,7 @@
 import { Keyboard } from './input';
 import { Player } from './player';
 import { Bullet } from './bullet';
-import { Enemy } from './enemy';
+import { Turret } from './enemy';
 import { Coin } from './coin';
 import { Entity } from './entity';
 import { Wall } from './wall';
@@ -18,7 +18,7 @@ var kb: Keyboard;
 var player: Player;
 var bullets: Array<Bullet>;
 var bulletPool: Array<Bullet>;
-var enemies: Array<Enemy>;
+var enemies: Array<Turret>;
 var walls: Array<Wall>;
 var coins: Array<Coin>;
 var coinFrequency:number;
@@ -31,7 +31,7 @@ window.onload = () => {
     document.documentElement.style.overflow = 'hidden'; 
 
     player = new Player(WIDTH/2,HEIGHT/2);
-    enemies = [new Enemy(48,48), new Enemy(WIDTH-48, HEIGHT-48)];
+    enemies = [new Turret(48,48), new Turret(WIDTH-48, HEIGHT-48)];
     enemies[0].vx = 1;
     enemies[1].vx = -1;
     //enemies = [];
