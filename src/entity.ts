@@ -76,6 +76,12 @@ export class Entity {
         }
     }
 
+    public fullStartUp():void {
+        while(!this.startedUp) {
+            this.startup();
+        }
+    }
+
 
     public shutdown():void {
         this.startupCounter = 0;
@@ -146,18 +152,8 @@ export class Entity {
         ctx.restore();
     }
 
-    protected adjustRenderAlpha() {
-        if(this.online()) {
-            this.alpha += 0.05;
-            if (this.alpha > 1) { this.alpha = 1 }
-        } else {
-            this.alpha -= 0.05;
-            if (this.alpha < this.minAlpha) { this.alpha = this.minAlpha };
-        } 
-    }
 
     public render(ctx: CanvasRenderingContext2D): void {
-        this.adjustRenderAlpha();
         this.renderSquare(ctx);
     }
 }
