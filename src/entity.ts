@@ -10,6 +10,7 @@ export class Entity {
     public height: number;
     public color: string;
     public alpha: number;
+    private dead:boolean;
     
 
     // keep dir protected to control radian/degree conversions
@@ -59,6 +60,19 @@ export class Entity {
         this.startupCounter = 0;
         this.shutdownCounter = 0;
         this.dir = 0;
+        this.dead = false;
+    }
+
+    public kill():void {
+        this.dead = true;
+    }
+
+    public isDead():boolean {
+        return this.dead;
+    }
+
+    public alive():boolean {
+        return !this.dead;
     }
 
     public power():number {
@@ -98,8 +112,8 @@ export class Entity {
         return this.startedUp;
     }
 
-    public launch(direction:number, speed:number) {
-        this.turnTo(direction);
+    public launch(directionInDegrees:number, speed:number) {
+        this.turnTo(directionInDegrees);
         this.vx = speed * Math.cos(this.dir);
         this.vy = speed * Math.sin(this.dir);
     }
@@ -154,6 +168,9 @@ export class Entity {
 
 
     public render(ctx: CanvasRenderingContext2D): void {
-        this.renderSquare(ctx);
+        if(!this.isDead()) {
+            this.renderSquare(ctx);
+        }
+        
     }
 }

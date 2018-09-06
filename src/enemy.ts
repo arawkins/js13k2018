@@ -1,34 +1,70 @@
 import { Entity } from './entity';
+import { WaveCommand } from './wave';
 
-export class Turret extends Entity {
+export class Enemy extends Entity {
 
-    private rateOfFire:number = 30;
+    private rateOfFire:number = 0;
     private fireCounter:number = 0;
+    private commands:Array<WaveCommand>;
+    private commandCounter:number = 0;
+    private executedCurrentCommand:boolean;
+    
 
     constructor(x:number,y:number) {
         super(x,y);
+        this.commands = [];
+        this.commandCounter = 0;
         this.color = "red";
-        this.alpha = 0.2;
+        this.executedCurrentCommand = false;
     }
 
-    public fire() {
+    public fire():void {
         this.fireCounter++;
         if (this.fireCounter >= this.rateOfFire) {
             this.fireCounter = 0;
-            let bulletDetail = {
-                x: this.x,
-                y: this.y,
-                dir: this.dir * 180/Math.PI,
-                speed: 5
+            let bullet:Entity = new Entity(this.x, this.y, 5,5,"red");                                 
+            document.dispatchEvent(new CustomEvent("EnemyFireBullet",{detail: bullet}));
+        }
+        
+    }
+   
+    public kill():void {
+        super.kill();
+        this.commands = [];
+    }
+
+    public addCommand(wc:WaveCommand):void {
+        this.commands.push(wc);
+    }
+
+    public done():boolean {
+        return this.commands.length == 0;
+    }
+
+    public update():void {
+        super.update();
+        if(this.commands.length > 0) {
+            let wc:WaveCommand = this.commands[0];
+            if(!this.executedCurrentCommand) {
+                this.executeCommand(wc);
+                this.executedCurrentCommand = true;
             }
-            let fireBulletEvent = new CustomEvent("FireBullet",{detail: bulletDetail});
-            document.dispatchEvent(fireBulletEvent);
+            this.commandCounter++;
+            if(this.commandCounter >= wc.duration) {
+                this.commandCounter = 0;
+                this.executedCurrentCommand = false;
+                this.commands.shift();
+            }
         }
     }
 
-    public render(ctx:CanvasRenderingContext2D) {
-        
-        super.render(ctx);
-    }
+    public executeCommand(wc:WaveCommand):void {
+        if(wc.fire) {
+            this.fire();
+        }
 
+        if(wc.dir != null && wc.speed != null) {
+            this.launch(wc.dir, wc.speed);
+        }
+    }
 }
