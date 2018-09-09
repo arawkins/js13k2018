@@ -4,6 +4,8 @@ import { Player } from './player';
 import { Enemy } from './enemy';
 import { Entity } from './entity';
 import { Wave } from './wave';
+import { PowerUp } from './powerup';
+import { Particle } from './particle';
 
 export class GameState extends State {
 
@@ -15,10 +17,11 @@ export class GameState extends State {
     private player: Player;
     private playerBullets: Array<Entity>;
     private enemyBullets: Array<Entity>;
+    private particles: Array<Particle>;
     
     private enemies: Array<Enemy>;
     private enemyWaves: Array<Wave>;
-    
+    private powerUps: Array<PowerUp>;
 
     constructor(width:number, height:number) {
         super();
@@ -35,6 +38,8 @@ export class GameState extends State {
         this.enemies = [];      
         this.playerBullets = [];
         this.enemyBullets = [];
+        this.powerUps = [];
+        this.particles = [];
 
         this.enemyWaves = [];
         // create new wave
@@ -109,6 +114,7 @@ export class GameState extends State {
                     this.playerBullets.splice(playerBulletIndex,1);
                     this.enemies.splice(enemyIndex,1);
                     e.kill();
+                    this.explode(e.x, e.y);
                 }
             })
         });
@@ -139,6 +145,32 @@ export class GameState extends State {
                     this.enemies.push(e);
                 });
             }
+            if(w.cleared()) {
+                this.powerUps.push(w.spawnPowerUp());
+                this.enemyWaves.splice(index,1);
+            }
+        })
+
+        this.powerUps.forEach((p, index) => {
+            p.update();
+            if(p.x <=p.width || p.x >=this.width-p.width) {
+                p.vx *= -1;
+            }
+            if(p.y <= p.height || p.y >= this.height-p.height) {
+                p.vy *= -1
+            }
+            if (p.collide(this.player)) {
+                this.powerUps.splice(index,1);
+                console.log(p.getPowerLevel());
+                this.player.powerUp(p.getPowerLevel());
+            }
+        });
+
+        this.particles.forEach((p, index) => {
+            p.update();
+            if(p.isDead()) {
+                this.particles.splice(index,1);
+            }
         })
 
         this.kb.update();
@@ -157,6 +189,17 @@ export class GameState extends State {
 
     private onPlayerFireBullet(e) {
         this.playerBullets.push(e.detail);
+    }
+
+    private explode(x:number,y:number,amount:number=14) {
+        let i:number = 0;
+        let increment:number = 360/amount;
+        while(i<amount) {
+            let p:Particle = new Particle(x,y);
+            p.launch(increment*i + Math.random()*12,1+Math.random()*2);
+            this.particles.push(p);
+            i++;
+        }       
     }
 
     public end() {
@@ -179,6 +222,12 @@ export class GameState extends State {
         this.playerBullets.forEach((b, playerBulletIndex) => {
             b.render(ctx);
         });
+        this.powerUps.forEach((p) => {
+            p.render(ctx);
+        })
+        this.particles.forEach((p) => {
+            p.render(ctx);
+        })
     }
 
 }

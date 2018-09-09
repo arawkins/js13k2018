@@ -4,9 +4,9 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
 
 module.exports = {
-    mode: 'production',
+    mode: 'development',
     entry: './src/main.ts',
-    devtool: 'none',
+    devtool: 'inline-source-map',
     module: {
         rules: [
             {

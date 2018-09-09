@@ -1,5 +1,5 @@
 import { Enemy } from './enemy';
-import { Entity } from './entity';
+import { PowerUp } from './powerup';
 
 export class Wave {
 
@@ -13,6 +13,7 @@ export class Wave {
     private startTime:number;
     private startCounter:number;
     private enemyType:number;
+    private finalEnemy:Enemy;
 
     constructor(x:number, y:number, startTimeInSeconds:number, numEnemies:number, enemyType:number = 1) {
         this.enemies = [];
@@ -33,6 +34,15 @@ export class Wave {
     public update():void {
         if(!this.started) {
             this.startCounter++;
+        }
+        if(!this.cleared()) {
+            for(let i:number=this.enemies.length-1; i>=0; i--) {
+                let e:Enemy = this.enemies[i];
+                if(e.alive()) {
+                    this.finalEnemy = e;
+                    break;
+                }
+            }
         }
     }
 
@@ -69,6 +79,7 @@ export class Wave {
                 e.addCommand(c);
             })
         })
+        this.finalEnemy = this.enemies[this.enemies.length-1];
     }
 
     public move(dir:number, seconds:number, speed:number=1) {
@@ -96,6 +107,9 @@ export class Wave {
         this.enemies.push(e);
     }
 
+    public spawnPowerUp():PowerUp {
+        return new PowerUp(this.finalEnemy.x, this.finalEnemy.y);
+    }
 }
 
 export class WaveCommand {
