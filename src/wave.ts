@@ -8,14 +8,15 @@ export class Wave {
     private enemies:Array<Enemy>;
     private commands:Array<WaveCommand>;
     private enemySpacing:number;
-    private y:number;
-    private x:number;
+    public y:number;
+    public x:number;
     private startTime:number;
     private startCounter:number;
     private enemyType:number;
     private finalEnemy:Enemy;
+    private enemyPool:Array<Enemy>;
 
-    constructor(x:number, y:number, startTimeInSeconds:number, numEnemies:number, enemyType:number = 1) {
+    constructor(x:number, y:number, startTimeInSeconds:number, numEnemies:number, enemyPool:Array<Enemy>, enemyType:number = 1) {
         this.enemies = [];
         this.commands = [];
         this.enemySpacing = 20;
@@ -26,7 +27,15 @@ export class Wave {
         this.enemyType = enemyType;
         this.started = false;
         while(this.enemies.length < numEnemies) {
-            let e:Enemy = new Enemy(this.x, this.y);
+            let e:Enemy;
+            if(enemyPool.length > 0) {
+                e = enemyPool.pop();
+                e.init();
+                e.x = this.x;
+                e.y = this.y;
+            } else {    
+                e = new Enemy(this.x, this.y);
+            }
             this.enemies.push(e);
         }
     }
@@ -80,6 +89,8 @@ export class Wave {
             })
         })
         this.finalEnemy = this.enemies[this.enemies.length-1];
+        let pUpEnemy:Enemy = this.enemies[Math.floor(Math.random()*this.enemies.length)];
+        pUpEnemy.hasPowerUp = true;
     }
 
     public move(dir:number, seconds:number, speed:number=1) {

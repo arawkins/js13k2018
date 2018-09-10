@@ -10,6 +10,7 @@ export class Entity {
     public height: number;
     public color: string;
     public alpha: number;
+    public hp:number;
     private dead:boolean;
     
 
@@ -42,6 +43,7 @@ export class Entity {
         this.shutdownCounter = 0;
         this.startupCounter = 0;
         this.minAlpha = 0.2;
+        this.hp = 1;
     }
 
     public update():void {
@@ -51,7 +53,7 @@ export class Entity {
         this.y += this.vy;
     }
 
-    public reset() {
+    public init() {
         this.vx = 0;
         this.vy = 0;
         this.ax = 0;
@@ -61,6 +63,14 @@ export class Entity {
         this.shutdownCounter = 0;
         this.dir = 0;
         this.dead = false;
+        this.hp = 1;
+    }
+
+    public damage(amount:number) {
+        this.hp -= amount;
+        if(this.hp <=0) {
+            this.kill();
+        }
     }
 
     public kill():void {
@@ -77,39 +87,6 @@ export class Entity {
 
     public power():number {
         return this.basePower;
-    }
-
-    public startup():void {
-        this.shutdownCounter = 0;
-        if(!this.startedUp) {
-            this.startupCounter++;
-            if (this.startupCounter > this.startupTime) {
-                this.startupCounter = this.startupTime;
-                this.startedUp = true;
-            }
-        }
-    }
-
-    public fullStartUp():void {
-        while(!this.startedUp) {
-            this.startup();
-        }
-    }
-
-
-    public shutdown():void {
-        this.startupCounter = 0;
-        if(this.startedUp) {
-            this.shutdownCounter++
-            if(this.shutdownCounter > this.shutdownTime) {
-                this.shutdownCounter = 0;
-                this.startedUp = false;
-            }
-        } 
-    }
-
-    public online():boolean {
-        return this.startedUp;
     }
 
     public launch(directionInDegrees:number, speed:number) {
@@ -144,32 +121,41 @@ export class Entity {
         return false;
     }
 
-    protected renderCircle(ctx:CanvasRenderingContext2D) {
+    protected renderCircle(ctx:CanvasRenderingContext2D, offsetX:number=0,offsetY:number=0) {
         ctx.save();
         ctx.beginPath();
         ctx.globalAlpha = this.alpha;
         ctx.fillStyle = this.color;
-        ctx.arc(this.x, this.y, this.width, 0, 2 * Math.PI);
+        ctx.arc(this.x+offsetX, this.y+offsetY, this.width, 0, 2 * Math.PI);
         ctx.fill();
         ctx.restore();
     }
 
-    protected renderSquare(ctx:CanvasRenderingContext2D) {
+    protected renderSquare(ctx:CanvasRenderingContext2D, drawFill:boolean = true) {
         ctx.save();
         ctx.beginPath();
         ctx.globalAlpha = this.alpha;
+        
         ctx.fillStyle = this.color;
         ctx.strokeStyle = this.color;
         ctx.lineWidth = 1;
+
         ctx.rect(this.x-this.width/2, this.y-this.height/2, this.width, this.height);
-        ctx.fill();
+        if (drawFill) {
+            ctx.fill();
+        } else {
+            ctx.stroke();
+        
+        }
+        
+        
         ctx.restore();
     }
 
 
-    public render(ctx: CanvasRenderingContext2D): void {
+    public render(ctx: CanvasRenderingContext2D,drawFill:boolean = true): void {
         if(!this.isDead()) {
-            this.renderSquare(ctx);
+            this.renderSquare(ctx,drawFill);
         }
         
     }

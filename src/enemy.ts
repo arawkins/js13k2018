@@ -8,6 +8,8 @@ export class Enemy extends Entity {
     private commands:Array<WaveCommand>;
     private commandCounter:number = 0;
     private executedCurrentCommand:boolean;
+
+    public hasPowerUp:boolean;
     
 
     constructor(x:number,y:number) {
@@ -16,16 +18,25 @@ export class Enemy extends Entity {
         this.commandCounter = 0;
         this.color = "red";
         this.executedCurrentCommand = false;
+        this.hasPowerUp = false;
     }
 
     public fire():void {
         this.fireCounter++;
         if (this.fireCounter >= this.rateOfFire) {
             this.fireCounter = 0;
-            let bullet:Entity = new Entity(this.x, this.y, 5,5,"red");                                 
+            let bullet:Entity = new Entity(this.x, this.y, 8,8,"pink");                                 
             document.dispatchEvent(new CustomEvent("EnemyFireBullet",{detail: bullet}));
         }
         
+    }
+
+    public init():void {
+        super.init();
+        this.commands = [];
+        this.executedCurrentCommand = false;
+        this.hasPowerUp = false;
+        this.commandCounter = 0;
     }
    
     public kill():void {

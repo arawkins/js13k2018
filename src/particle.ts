@@ -8,6 +8,14 @@ export class Particle extends Entity {
         this.lifeTime = lifeTime;
         this.currentLife = this.lifeTime;
     }
+
+    public init() {
+        super.init();
+        this.currentLife = this.lifeTime;
+        this.alpha = 1;
+        this.width=12;
+        this.height=12;
+    }
     public update() {
         super.update();
         this.currentLife--;

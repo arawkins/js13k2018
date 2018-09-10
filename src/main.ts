@@ -2,6 +2,7 @@ import { State } from './state';
 import { GameState } from './game';
 import { TitleScreenState } from './titlescreen';
 import { GameOverState } from './gameover';
+import { WinState } from './win';
 import { Starfield } from './starfield';
 import './style.css';
 
@@ -14,6 +15,7 @@ var ctx: CanvasRenderingContext2D;
 var gameState: GameState;
 var titleScreenState: TitleScreenState;
 var gameOverState: GameOverState;
+var winState: WinState;
 var starField: Starfield;
 
 window.onload = () => {
@@ -34,9 +36,10 @@ window.onload = () => {
     
     starField = new Starfield(WIDTH, HEIGHT);  
 
-    gameState = new GameState(WIDTH,HEIGHT);
+    gameState = new GameState(WIDTH,HEIGHT, starField);
     titleScreenState = new TitleScreenState();
     gameOverState = new GameOverState();
+    winState = new WinState();
 
     document.addEventListener("LoadState", onLoadState);
     
@@ -51,6 +54,11 @@ function gameLoop() {
     ctx.fillRect(0, 0, WIDTH, HEIGHT);    
     starField.update();
     starField.render(ctx);
+    
+    if(currentState === gameOverState || currentState == winState) {
+        gameState.update();
+        gameState.render(ctx);
+    }
     currentState.render(ctx);
 }
 
@@ -74,6 +82,10 @@ function onLoadState(e) {
 
         case "GameOverState":
         loadState(gameOverState);
+        break;
+
+        case "WinState":
+        loadState(winState);
         break;
     }
 }
