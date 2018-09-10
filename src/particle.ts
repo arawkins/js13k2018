@@ -5,8 +5,7 @@ export class Particle extends Entity {
 
     constructor(x:number,y:number,color:string="white", lifeTime:number=30) {
         super(x,y,12,12,color);
-        this.lifeTime = lifeTime;
-        this.currentLife = this.lifeTime;
+        this.init();
     }
 
     public init() {

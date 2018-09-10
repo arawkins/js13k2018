@@ -31,7 +31,6 @@ export class GameState extends State {
 
     private waveCounter:number;
     private waveInterval:number;
-    private waveCount:number;
     private terrainCounter:number;
     private terrainInterval:number;
     private terrain:Array<Entity>;
@@ -70,7 +69,6 @@ export class GameState extends State {
         this.terrainCounter = 0;
         this.waveInterval = 600;
         this.waveCounter = 0;
-        this.waveCount = 0;
         this.renderFlip = 0;
         this.wonGame = false;
         this.lostGame = false;
@@ -95,35 +93,24 @@ export class GameState extends State {
         this.waveCounter++;
         if(this.waveCounter >= this.waveInterval) {
             this.waveCounter = 0;
-            this.waveCount++;
             let side:number = Math.random();
-            if (side < 0.5) {
-                let w:Wave = new Wave(this.width+100, 100+Math.random()*100, 0, 1+Math.random()*this.player.speed, this.enemyPool, 1);
-                this.terrain.forEach((t) => {
-                    while(w.y > t.y - t.height/2 && w.y < t.y + t.height/2) {
-                        w.y += 50;
-                    }
-                })
-                w.move(180, 2+Math.random()*2, 3+Math.random()*this.player.speed);
-                w.fire();
-                w.move(90,1+Math.random()*1, 3+Math.random()*this.player.speed);
-                w.fire();
-                w.move(0,4, 3+Math.random()*this.player.speed);
-                this.enemyWaves.push(w);
+            let w:Wave = new Wave(this.width+100, 100+Math.random()*100, 0, 1+Math.random()*this.player.speed, this.enemyPool, 1);
+            this.terrain.forEach((t) => {
+                while(w.y > t.y - t.height/2 && w.y < t.y + t.height/2) {
+                    w.y += 50;
+                }
+            })
+            let distance = 3+Math.random()*this.player.speed;
+            w.move(180, 2+Math.random()*2, distance);
+            w.fire();
+            if(side > 0.5) {
+                w.move(90,1+Math.random()*1, 2+Math.random()*this.player.speed);
             } else {
-                let w2:Wave = new Wave(this.width+100, this.height-100-Math.random()*100,0,Math.random()*this.player.speed+1,this.enemyPool, 1);
-                this.terrain.forEach((t) => {
-                    while(w2.y > t.y - t.height/2 && w2.y < t.y + t.height/2) {
-                        w2.y -= 50;
-                    }
-                })
-                w2.move(180, 2+Math.random()*4, 3+Math.random()*this.player.speed);
-                w2.fire();
-                w2.move(270,1+Math.random()*1, 3+Math.random()*this.player.speed);
-                w2.fire();
-                w2.move(0,6, 3+Math.random()*this.player.speed);
-                this.enemyWaves.push(w2);
+                w.move(270,1+Math.random()*1, 2+Math.random()*this.player.speed);
             }
+            w.fire();
+            w.move(0,4, distance);
+            this.enemyWaves.push(w);
             this.waveInterval -= 25;
             if(this.waveInterval <= 300) {
                 this.waveInterval += Math.random()*100+100 - this.player.speed * 5;
@@ -142,18 +129,15 @@ export class GameState extends State {
             let tHeight = 50 + Math.random() * 150;
             let t:Entity = new Entity(this.width + tWidth, Math.random()*this.height, tWidth, tHeight, "#999999");
             this.terrain.push(t);
-            //console.log(t);
         }
 
         this.terrain.forEach((t, index) => {
-            //console.log(t.x, t.y);
             t.x -= this.player.speed;
             if(t.collide(this.player)) {
                 this.player.damage(1);
             }
             if(t.x < -t.width) {
                 this.terrain.splice(index,1);
-            
             }
             this.shrapnel.forEach((s,index) => {
                 if(s.collide(t)) {
@@ -265,16 +249,6 @@ export class GameState extends State {
                 if(b.collide(e)) {
                     e.damage(1);
                     this.playerBullets.splice(playerBulletIndex,1);
-                    if(e.isDead()) {
-                        if(e.hasPowerUp) {
-                            this.powerUps.push(new PowerUp(e.x, e.y));
-                        }
-                        this.enemies.splice(enemyIndex,1);
-                        this.enemyPool.push(e);
-                        e.kill();
-                        this.explode(e.x, e.y);
-                        this.blastShrapnel(e.x, e.y, 4, e.width/2);
-                    }
                 }
             })
         });
@@ -287,9 +261,7 @@ export class GameState extends State {
                 this.enemyBullets.splice(index,1);
                 this.entityPool.push(b);
                 this.player.damage(1);
-                
             }
-            
         });
 
         this.enemies.forEach((enemy, index) => {
@@ -303,6 +275,15 @@ export class GameState extends State {
             if(enemy.done()) {
                 this.enemies.splice(index,1);
                 this.enemyPool.push(enemy);
+            }
+            if(enemy.isDead()) {
+                if(enemy.hasPowerUp) {
+                    this.powerUps.push(new PowerUp(enemy.x, enemy.y));
+                }
+                this.enemies.splice(index,1);
+                this.enemyPool.push(enemy);
+                this.explode(enemy.x, enemy.y);
+                this.blastShrapnel(enemy.x, enemy.y, 4, enemy.width/2);
             }
         });
 
@@ -330,7 +311,7 @@ export class GameState extends State {
             }
             if (p.collide(this.player)) {
                 this.powerUps.splice(index,1);
-                this.player.powerUp(p.getPowerLevel());
+                this.player.powerUp(1);
             }
         });
 
@@ -369,7 +350,7 @@ export class GameState extends State {
                 if (pb.collide(s)) {
                     this.playerBullets.splice(index2,1);
                     this.shrapnel.splice(index,1);
-                    if(s.width >= 8) {
+                    if(s.width > 8) {
                         this.blastShrapnel(s.x, s.y, 2, s.width/2)
                     } else {
                         let r:number = Math.random();
@@ -386,7 +367,6 @@ export class GameState extends State {
 
         
         if(this.player.isDead() && !this.lostGame) {
-            
             this.end();
         }
 
@@ -475,12 +455,7 @@ export class GameState extends State {
     public exit():void {
         if(this.player.isDead()) {
             this.explode(this.player.x, this.player.y, 50);
-            this.explode(this.player.x+50*Math.random(), this.player.y+50*Math.random(), 50);
-            this.explode(this.player.x-50*Math.random(), this.player.y-50*Math.random(), 50);
-            this.explode(this.player.x+50*Math.random(), this.player.y-50*Math.random(), 50);
-            this.explode(this.player.x-50*Math.random(), this.player.y+50*Math.random(), 50);
         } else {
-            
             this.player.autopilot = true;
         }
         
@@ -527,10 +502,7 @@ export class GameState extends State {
             } else {
                 e.color="#CCCCCC";
                 e.render(ctx, false)
-            }
-            
-            
-            
+            }            
         }
 
     }

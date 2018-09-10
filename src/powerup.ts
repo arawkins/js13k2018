@@ -6,10 +6,6 @@ export class PowerUp extends Entity {
         super(x,y,8,8,"orange");
         this.launch(Math.random()*360,2);
     }
-
-    public getPowerLevel():number {
-        return 1;
-    }
     
     public render(ctx:CanvasRenderingContext2D) {
         super.renderCircle(ctx);
