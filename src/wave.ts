@@ -1,22 +1,19 @@
-import { Enemy } from './enemy';
-import { PowerUp } from './powerup';
+import { EntityPool, Entity } from './entity';
 
 export class Wave {
 
     public started:boolean;
 
-    private enemies:Array<Enemy>;
+    private enemies:Array<Entity>;
     private commands:Array<WaveCommand>;
     private enemySpacing:number;
+    public lastEnemy:Entity;
     public y:number;
     public x:number;
     private startTime:number;
     private startCounter:number;
-    private enemyType:number;
-    private finalEnemy:Enemy;
-    private enemyPool:Array<Enemy>;
 
-    constructor(x:number, y:number, startTimeInSeconds:number, numEnemies:number, enemyPool:Array<Enemy>, enemyType:number = 1) {
+    constructor(x:number, y:number, startTimeInSeconds:number, numEnemies:number, enemyPool:EntityPool) {
         this.enemies = [];
         this.commands = [];
         this.enemySpacing = 20;
@@ -24,49 +21,37 @@ export class Wave {
         this.x = x;
         this.startTime = startTimeInSeconds * 60;
         this.startCounter = 0;
-        this.enemyType = enemyType;
         this.started = false;
         while(this.enemies.length < numEnemies) {
-            let e:Enemy;
-            if(enemyPool.length > 0) {
-                e = enemyPool.pop();
-                e.init();
-                e.x = this.x;
-                e.y = this.y;
-            } else {    
-                e = new Enemy(this.x, this.y);
-            }
+            let e:Entity = enemyPool.getEntity(this.x, this.y, 32,32,"red",999999);
             this.enemies.push(e);
         }
+        this.lastEnemy = this.enemies[this.enemies.length-1];
     }
 
     public update():void {
         if(!this.started) {
             this.startCounter++;
         }
-        if(!this.cleared()) {
-            for(let i:number=this.enemies.length-1; i>=0; i--) {
-                let e:Enemy = this.enemies[i];
-                if(e.alive()) {
-                    this.finalEnemy = e;
-                    break;
-                }
+        this.enemies.forEach((e) => {
+            if(!e.dead) {
+                this.lastEnemy = e;
             }
-        }
+        });
     }
 
     public ready():boolean {
         return this.startCounter > this.startTime;
     }
 
-    public getEnemies():Array<Enemy> {
+    public getEnemies():Array<Entity> {
         return this.enemies;
     }
 
     public cleared():boolean {
         let cleared = true;
         this.enemies.forEach((e) => {
-            if (!e.isDead()) {
+            if (!e.dead) {
                 cleared = false;
             }
         })
@@ -88,9 +73,7 @@ export class Wave {
                 e.addCommand(c);
             })
         })
-        this.finalEnemy = this.enemies[this.enemies.length-1];
-        let pUpEnemy:Enemy = this.enemies[Math.floor(Math.random()*this.enemies.length)];
-        pUpEnemy.hasPowerUp = true;
+        
     }
 
     public move(dir:number, seconds:number, speed:number=1) {
@@ -101,38 +84,26 @@ export class Wave {
         this.commands.push(c);
     }
 
-    public fire() {
-        let c:WaveCommand = new WaveCommand();
-        c.fire = true;
-        this.commands.push(c);
-    }
-
-    public wait(seconds:number) {
-        let c:WaveCommand = new WaveCommand();
-        c.fire = false;
-        c.duration = seconds * 60; // 60fps, so it should last 60 times per second of duration
-        this.commands.push(c);
-    }
-
-    public addEnemy(e:Enemy) {
+    public addEnemy(e:Entity) {
         this.enemies.push(e);
     }
 
-    public spawnPowerUp():PowerUp {
-        return new PowerUp(this.finalEnemy.x, this.finalEnemy.y);
+    public destroy() {
+        this.enemies = [];
+        this.commands = [];
+        this.lastEnemy = null;
     }
+
 }
 
 export class WaveCommand {
     public duration:number;
-    public fire:boolean;
     public dir:number;
     public speed:number;
 
     constructor() {
         this.dir = null;
         this.speed = 0;
-        this.fire = false;
         this.duration = 0;
     }
 

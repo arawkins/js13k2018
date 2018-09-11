@@ -1,26 +1,8 @@
 import { Entity } from './entity';
 export class Particle extends Entity {
-    private lifeTime:number;
-    private currentLife:number;
-
-    constructor(x:number,y:number,color:string="white", lifeTime:number=30) {
-        super(x,y,12,12,color);
-        this.init();
-    }
 
     public init() {
-        super.init();
-        this.currentLife = this.lifeTime;
-        this.alpha = 1;
-        this.width=12;
-        this.height=12;
-    }
-    public update() {
-        super.update();
-        this.currentLife--;
-        if (this.currentLife <= 0) {
-            this.kill();
-        }
+        super.init(0,0,12,12,"white",30);
     }
 
     public render(ctx:CanvasRenderingContext2D) {

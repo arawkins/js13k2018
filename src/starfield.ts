@@ -17,13 +17,16 @@ export class Starfield {
         this.width = width;
         this.height = height;
         for(let i=0; i<25; i++) {
-            let s1:Entity = new Entity(Math.random()*width, Math.random()*height, 1, 1, "white");
+            let s1:Entity = new Entity();
+            s1.init(Math.random()*width, Math.random()*height, 1, 1, "white");
             //s1.vx = -1 * this.speed;
             s1.alpha = 0.25;
-            let s2:Entity = new Entity(Math.random()*width, Math.random()*height, 2, 2, "white");
+            let s2:Entity = new Entity();
+            s2.init(Math.random()*width, Math.random()*height, 2, 2, "white");
             //s2.vx = -2 * this.speed;
             s2.alpha = 0.35;
-            let s3:Entity = new Entity(Math.random()*width, Math.random()*height, 3, 3, "white");
+            let s3:Entity = new Entity();
+            s3.init(Math.random()*width, Math.random()*height, 3, 3, "white");
            // s3.vx = -3 * this.speed;
             s3.alpha = 0.45;
             this.stars.push(s1);
@@ -58,7 +61,6 @@ export class Starfield {
                 s.y = Math.random() * this.height;
             }
         });
-        
     }
 
     public render(ctx:CanvasRenderingContext2D):void {

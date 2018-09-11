@@ -1,3 +1,4 @@
+import { WaveCommand } from './wave';
 
 export class Entity {
     public x: number;
@@ -11,59 +12,75 @@ export class Entity {
     public color: string;
     public alpha: number;
     public hp:number;
-    private dead:boolean;
-    
+    public lifeTime:number;
+    public currentLife:number;
+    public dead:boolean;
 
     // keep dir protected to control radian/degree conversions
     protected dir: number;
-    protected startupTime: number;
-    protected startupCounter: number;
-    protected startedUp: boolean;
-    protected shutdownCounter:number;
-    protected shutdownTime:number;
-    protected minAlpha:number;
     protected basePower:number;
 
-    constructor(x: number, y: number, width: number = 32, height: number = 32, color: string="white", power:number = 0.5) {
-        this.x = x;
-        this.y = y;
-        this.vx = 0;
-        this.vy = 0;
-        this.ax = 0;
-        this.ay = 0;
-        this.width = width;
-        this.height = height;
-        this.color = color;
-        this.basePower = power;
-        this.dir = 0;
-        this.alpha = 1;
-        this.startupTime = 45;
-        this.startedUp = false;
-        this.shutdownTime = 45;
-        this.shutdownCounter = 0;
-        this.startupCounter = 0;
-        this.minAlpha = 0.2;
-        this.hp = 1;
-    }
-
+    private commands:Array<EntityCommand>;
+    private commandCounter:number = 0;
+    private executedCurrentCommand:boolean;
+    
     public update():void {
         this.vx += this.ax;
         this.vy += this.ay;
         this.x += this.vx;
         this.y += this.vy;
+        this.currentLife--;
+        if (this.currentLife <= 0) {
+            this.kill();
+        }
+        if(this.commands.length > 0) {
+            let wc:WaveCommand = this.commands[0];
+            if(!this.executedCurrentCommand) {
+                this.executeCommand(wc);
+                this.executedCurrentCommand = true;
+            }
+            this.commandCounter++;
+            if(this.commandCounter >= wc.duration) {
+                this.commandCounter = 0;
+                this.executedCurrentCommand = false;
+                this.commands.shift();
+            }
+        }
     }
 
-    public init() {
+    public init(x:number=0, y:number=0,width:number=32, height:number=32, color:string="white", lifeTime:number = 999999) {
+        this.x = x;
+        this.y = y;
+        this.width=width;
+        this.height = height;
+        this.color = color;
+        this.lifeTime = lifeTime;
+        this.currentLife = this.lifeTime;
+        this.alpha = 1;
         this.vx = 0;
         this.vy = 0;
         this.ax = 0;
         this.ay = 0;
-        this.startedUp = false;
-        this.startupCounter = 0;
-        this.shutdownCounter = 0;
         this.dir = 0;
         this.dead = false;
         this.hp = 1;
+        this.commands = [];
+        this.executedCurrentCommand = false;
+        this.commandCounter = 0;
+    }
+    
+    public addCommand(c:EntityCommand):void {
+        this.commands.push(c);
+    }
+
+    public done():boolean {
+        return this.commands.length == 0;
+    }
+
+    public executeCommand(c:EntityCommand):void {
+        if(c.dir != null && c.speed != null) {
+            this.launch(c.dir, c.speed);
+        }
     }
 
     public damage(amount:number) {
@@ -75,14 +92,6 @@ export class Entity {
 
     public kill():void {
         this.dead = true;
-    }
-
-    public isDead():boolean {
-        return this.dead;
-    }
-
-    public alive():boolean {
-        return !this.dead;
     }
 
     public power():number {
@@ -121,6 +130,14 @@ export class Entity {
         return false;
     }
 
+    public fade() {
+        this.alpha = this.currentLife / this.lifeTime;
+        if(this.alpha < 0) {
+            this.alpha = 0;
+            this.kill();
+        }
+    }
+
     protected renderCircle(ctx:CanvasRenderingContext2D, offsetX:number=0,offsetY:number=0) {
         ctx.save();
         ctx.beginPath();
@@ -147,16 +164,55 @@ export class Entity {
             ctx.stroke();
         
         }
-        
-        
         ctx.restore();
     }
 
 
     public render(ctx: CanvasRenderingContext2D,drawFill:boolean = true): void {
-        if(!this.isDead()) {
+        if(!this.dead) {
             this.renderSquare(ctx,drawFill);
-        }
-        
+        }   
     }
+}
+
+export class EntityPool {
+    private entities:Array<Entity>;
+
+    constructor() {
+        this.entities = [];
+    }
+
+    public getEntity(x:number=0,y:number=0,width:number=32,height:number=32,color:string="white",lifeTime:number=999999):Entity {
+        let e:Entity;
+        if (this.entities.length > 0) {
+            e = this.entities.pop();
+        } else {
+            e = new Entity()
+        }
+        e.init(x,y,width,height,color,lifeTime);
+        return e;
+    }
+
+    public recycleEntity(e:Entity) {
+        this.entities.push(e);
+    }
+    
+    public recycle(arr:Array<Entity>) {
+        arr.forEach((e) => {
+            this.entities.push(e);
+        });
+    }
+}
+
+export class EntityCommand {
+    public duration:number;
+    public dir:number;
+    public speed:number;
+
+    constructor(dir:number, duration:number, speed:number) {
+        this.dir = dir;
+        this.speed = speed;
+        this.duration = duration;
+    }
+
 }
