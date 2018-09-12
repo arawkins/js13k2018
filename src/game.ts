@@ -101,7 +101,7 @@ export class GameState extends State {
             this.terrainCounter = 0;
             this.spawnTerrain();
         }
-
+       
         this.terrain.forEach((t, index) => {
             t.x -= this.player.speed;
             if(t.collide(this.player)) {
