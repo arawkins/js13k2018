@@ -2,7 +2,7 @@ import { State } from './state';
 import { Keyboard } from './input';
 import { Player } from './player';
 import { Enemy } from './enemy';
-import { Entity } from './entity';
+import { Entity, EntityPool } from './entity';
 import { Wave } from './wave';
 import { PowerUp } from './powerup';
 import { Particle } from './particle';
@@ -19,7 +19,7 @@ export class GameState extends State {
     private playerBullets: Array<Entity>;
     private enemyBullets: Array<Entity>;
     private shrapnel: Array<Entity>;
-    private entityPool:Array<Entity>;
+    private entityPool:EntityPool;
     private particles: Array<Particle>;
     private particlePool:Array<Particle>;
     
@@ -49,14 +49,14 @@ export class GameState extends State {
         document.addEventListener("EnemyFireBullet", this.onEnemyFireBullet.bind(this));
         document.addEventListener("PlayerFireBullet", this.onPlayerFireBullet.bind(this)); 
         this.particlePool = [];
-        this.entityPool = [];
+        this.entityPool = new EntityPool();
         this.enemyPool = [];
         
     }
 
     public start() {
-        this.player = new Player(75,this.height/2);
-        this.player.init();
+        this.player = new Player();
+        this.player.init(75,this.height/2);
         this.enemies = [];      
         this.playerBullets = [];
         this.enemyBullets = [];
@@ -75,7 +75,6 @@ export class GameState extends State {
     }
 
     public enter():void {
-        let self = this;
         if(this.wonGame) {
             this.wonGame = false;
             this.chargesToWin *= 3;
@@ -145,25 +144,23 @@ export class GameState extends State {
                     s.y += s.vy;
                     // if it's still collide after rebounding, just remove it.
                     if(s.collide(t)) {
-                        this.shrapnel.splice(index,1);
+                        s.kill();
                     }
                 }
             })
             this.enemies.forEach((e,index) => {
                 if(e.collide(t)) {
                     e.kill();
-                    this.explode(e.x, e.y);
-                    this.blastShrapnel(e.x, e.y, 4, e.width/2);
                 }
             });
             this.playerBullets.forEach((pb,index) => {
                 if (pb.collide(t)) {
-                    this.playerBullets.splice(index,1);
+                    pb.kill();
                 };
             });
             this.enemyBullets.forEach((eb,index) => {
                 if(eb.collide(t)) {
-                    this.enemyBullets.splice(index,1);
+                    eb.kill();
                 }
             });
         });
@@ -208,13 +205,10 @@ export class GameState extends State {
                     let p:Particle;
                     if (this.particlePool.length > 0) {
                         p = this.particlePool.pop();
-                        p.init();
-                        p.x = this.player.x - Math.random()*16;
-                        p.y = this.player.y + smokeY;
                     } else {
-                        p = new Particle(this.player.x, this.player.y+smokeY, "white", 30);
-                        
+                        p = new Particle();
                     }
+                    p.init(this.player.x- Math.random()*16, this.player.y+smokeY);
                     this.particles.push(p);
                     p.launch(180, this.player.speed);
                 }
@@ -243,38 +237,40 @@ export class GameState extends State {
         this.playerBullets.forEach((b, playerBulletIndex) => {
             b.update();
             if (b.x > this.width || b.x < 0 || b.y > this.height || b.y < 0) {
-                this.playerBullets.splice(playerBulletIndex,1);
+                b.kill();
             }
             this.enemies.forEach((e,enemyIndex) => {
                 if(b.collide(e)) {
                     e.damage(1);
-                    this.playerBullets.splice(playerBulletIndex,1);
+                    b.kill();
                 }
             })
+            if(b.isDead()) {
+                this.entityPool.recycle(this.playerBullets.splice(playerBulletIndex,1));
+            }
         });
 
         this.enemyBullets.forEach((b, index) => {
             b.update();
             if (b.x > this.width || b.x < 0 || b.y > this.height || b.y < 0) {
-                this.enemyBullets.splice(index,1);
+                b.kill();
             } else if (this.player.alive() && b.collide(this.player)) {
-                this.enemyBullets.splice(index,1);
-                this.entityPool.push(b);
+                b.kill();
                 this.player.damage(1);
+            }
+            if(b.isDead()) {
+                this.entityPool.recycle(this.enemyBullets.splice(index,1));
             }
         });
 
         this.enemies.forEach((enemy, index) => {
             enemy.update();
             if(enemy.collide(this.player)) {
-                this.enemies.splice(index,1);
-                this.enemyPool.push(enemy);
+                enemy.kill();
                 this.player.damage(3);
-                this.explode(enemy.x, enemy.y, 24);
             }
             if(enemy.done()) {
-                this.enemies.splice(index,1);
-                this.enemyPool.push(enemy);
+                enemy.kill();
             }
             if(enemy.isDead()) {
                 if(enemy.hasPowerUp) {
@@ -282,7 +278,7 @@ export class GameState extends State {
                 }
                 this.enemies.splice(index,1);
                 this.enemyPool.push(enemy);
-                this.explode(enemy.x, enemy.y);
+                this.explode(enemy.x, enemy.y, 24);
                 this.blastShrapnel(enemy.x, enemy.y, 4, enemy.width/2);
             }
         });
@@ -334,12 +330,8 @@ export class GameState extends State {
             if(s.x < -s.width || s.x > this.width + s.width || s.y < -s.height || s.y > this.height + s.height) {
                 s.kill();
             }
-            if(this.renderFlip >= 5) {
-                //this.explode(s.x, s.y, 0.1, "#CCC");
-            }
             if(s.isDead()) {
-                this.shrapnel.splice(index,1);
-                this.entityPool.push(s);
+                this.entityPool.recycle(this.shrapnel.splice(index,1));
             } else {
                 if(s.collide(this.player)) {
                     this.player.damage(1);
@@ -348,8 +340,8 @@ export class GameState extends State {
             }
             this.playerBullets.forEach((pb, index2) => {
                 if (pb.collide(s)) {
-                    this.playerBullets.splice(index2,1);
-                    this.shrapnel.splice(index,1);
+                    pb.kill()
+                    s.kill();
                     if(s.width > 8) {
                         this.blastShrapnel(s.x, s.y, 2, s.width/2)
                     } else {
@@ -382,35 +374,24 @@ export class GameState extends State {
 
 
     private onEnemyFireBullet(e) {
-        let enemyBullet:Entity = e.detail;
-        enemyBullet.init();
-        let dx:number = this.player.x - enemyBullet.x;
-        let dy:number = this.player.y - enemyBullet.y;
+        let dx:number = this.player.x - e.detail.x;
+        let dy:number = this.player.y - e.detail.y;
         let dir:number = Math.atan2(dy, dx) * 180 / Math.PI;
+        let enemyBullet:Entity = this.entityPool.getEntity(e.detail.x, e.detail.y, 8,8,"pink");
         enemyBullet.launch(dir, 5);        
-        this.enemyBullets.push(e.detail);
+        this.enemyBullets.push(enemyBullet);
     }
 
     private onPlayerFireBullet(e) {
-        this.playerBullets.push(e.detail);
+        let b:Entity = this.entityPool.getEntity(e.detail.x, e.detail.y, e.detail.width, e.detail.height, "pink");
+        b.launch(e.detail.dir, 20);
+        this.playerBullets.push(b);
     }
 
     private blastShrapnel(x:number, y:number, amount:number = 1, size:number=10) {
         let i:number = 1;
         while(i<=amount) {
-            let s:Entity;
-            if(this.entityPool.length > 0) {
-                s = this.entityPool.pop();
-                s.init();
-                s.x = x;
-                s.y = y;
-                s.width = size;
-                s.height = size;
-                s.color ="red"
-            } else {
-                s = new Entity(x,y,size,size,"red");
-            }
-            
+            let s:Entity = this.entityPool.getEntity(x,y,size,size,"red");
             s.launch(Math.random()*360,3);
             this.shrapnel.push(s);
             i++;
@@ -422,16 +403,12 @@ export class GameState extends State {
         let increment:number = 360/amount;
         while(i<amount) {
             let p:Particle;
-            
             if(this.particlePool.length > 0) {
                 p = this.particlePool.pop();
-                p.init();
-                p.x = x;
-                p.y = y;
-                p.color = color;
             } else {
-                p = new Particle(x,y, color);
+                p = new Particle();
             }
+            p.init(x,y);
             p.launch(increment*i + Math.random()*increment,1+Math.random()*amount/10);
             this.particles.push(p);
             i++;
@@ -466,34 +443,17 @@ export class GameState extends State {
         if (this.renderFlip >=8) {
             this.renderFlip = 0;
         }
-
-        this.starfield.scroll(this.player.speed, 0);
-        this.terrain.forEach((t, index) => {
-            t.render(ctx);
-        });
-        
-        this.enemies.forEach((enemy, index) => {
-            enemy.render(ctx);
-        });
-        this.enemyBullets.forEach((b, index) => {
-            b.render(ctx);
+        let toRender:Array<any> = [this.terrain, this.enemies, this.enemyBullets, this.playerBullets, this.powerUps, this.particles, this.shrapnel];
+        toRender.forEach((arr) => {
+            arr.forEach((entity) => {
+                entity.render(ctx);
+            })
         });
         this.player.render(ctx);
-        this.playerBullets.forEach((b, playerBulletIndex) => {
-            b.render(ctx);
-        });
-        this.powerUps.forEach((p) => {
-            p.render(ctx);
-        })
-        this.particles.forEach((p) => {
-            p.render(ctx);
-        })
-        this.shrapnel.forEach((s) => {
-            s.render(ctx);
-        })
+        this.starfield.scroll(this.player.speed, 0);
        
         for(let i:number=0; i<this.chargesToWin; i++) {
-            let e:Entity = new Entity(25+ i * 15, this.height-25, 10, 25, "#000066");
+            let e:Entity = this.entityPool.getEntity(25+ i * 15, this.height-25, 10, 25, "#000066")
             if(i < this.player.chargeLevel) {
                 if((!this.player.offline || this.renderFlip >= 4) && this.player.charge > i) {
                     e.color="#0000FF";

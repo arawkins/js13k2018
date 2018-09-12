@@ -30,12 +30,10 @@ export class Wave {
             let e:Enemy;
             if(enemyPool.length > 0) {
                 e = enemyPool.pop();
-                e.init();
-                e.x = this.x;
-                e.y = this.y;
             } else {    
-                e = new Enemy(this.x, this.y);
+                e = new Enemy();
             }
+            e.init(this.x, this.y);
             this.enemies.push(e);
         }
     }

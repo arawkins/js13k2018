@@ -11,14 +11,15 @@ export class Player extends Entity {
     public offline:boolean;
     public autopilot:boolean;
 
-    constructor(x: number, y: number) {
-        super(x,y);
+    constructor() {
+        super();
         this.color = "white";
         this.startCharge = 8;
-        this.init();
+        this.init(0,0);
     }
 
-    public init() {
+    public init(x: number, y: number) {
+        super.init(x,y);
         this.chargeLevel = this.startCharge;
         this.charge = this.chargeLevel;
         this.basePower = 0.25;
@@ -69,9 +70,14 @@ export class Player extends Entity {
     }
 
     public launchBullet(x:number,y:number,dir:number,width:number=15,height:number=5) {
-        let b:Entity = new Entity(x,y,width,height, "pink");
-        b.launch(dir,20);
-        document.dispatchEvent(new CustomEvent("PlayerFireBullet",{detail: b}));
+        let detail:Object = {
+            x,
+            y,
+            dir,
+            width,
+            height
+        }
+        document.dispatchEvent(new CustomEvent("PlayerFireBullet",{detail: detail}));
     }
 
     public fire():void {

@@ -12,11 +12,10 @@ export class Enemy extends Entity {
     public hasPowerUp:boolean;
     
 
-    constructor(x:number,y:number) {
-        super(x,y);
+    constructor() {
+        super();
         this.commands = [];
         this.commandCounter = 0;
-        this.color = "red";
         this.executedCurrentCommand = false;
         this.hasPowerUp = false;
     }
@@ -25,18 +24,18 @@ export class Enemy extends Entity {
         this.fireCounter++;
         if (this.fireCounter >= this.rateOfFire) {
             this.fireCounter = 0;
-            let bullet:Entity = new Entity(this.x, this.y, 8,8,"pink");                                 
-            document.dispatchEvent(new CustomEvent("EnemyFireBullet",{detail: bullet}));
+            document.dispatchEvent(new CustomEvent("EnemyFireBullet",{detail: {x:this.x, y:this.y}}));
         }
         
     }
 
-    public init():void {
-        super.init();
+    public init(x:number, y:number):void {
+        super.init(x,y);
         this.commands = [];
         this.executedCurrentCommand = false;
         this.hasPowerUp = false;
         this.commandCounter = 0;
+        this.color="red"
     }
    
     public kill():void {

@@ -3,13 +3,13 @@ export class Particle extends Entity {
     private lifeTime:number;
     private currentLife:number;
 
-    constructor(x:number,y:number,color:string="white", lifeTime:number=30) {
+    constructor(x:number=0,y:number=0,color:string="white", lifeTime:number=30) {
         super(x,y,12,12,color);
-        this.init();
+        this.lifeTime = lifeTime;
     }
 
-    public init() {
-        super.init();
+    public init(x:number,y:number) {
+        super.init(x,y);
         this.currentLife = this.lifeTime;
         this.alpha = 1;
         this.width=12;

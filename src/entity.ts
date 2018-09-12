@@ -16,34 +16,28 @@ export class Entity {
 
     // keep dir protected to control radian/degree conversions
     protected dir: number;
-    protected startupTime: number;
-    protected startupCounter: number;
-    protected startedUp: boolean;
-    protected shutdownCounter:number;
-    protected shutdownTime:number;
-    protected minAlpha:number;
     protected basePower:number;
 
-    constructor(x: number, y: number, width: number = 32, height: number = 32, color: string="white", power:number = 0.5) {
+    constructor(x: number=0, y: number=0, width: number = 32, height: number = 32, color: string="white") {
+        this.basePower = 0.5;
+        this.hp = 1;
+        this.init(x,y,width,height,color);
+    }
+
+    public init(x: number=0, y: number=0, width: number = 32, height: number = 32, color: string="white") {
         this.x = x;
         this.y = y;
+        this.width = width;
+        this.height = height;
+        this.color = color;
         this.vx = 0;
         this.vy = 0;
         this.ax = 0;
         this.ay = 0;
-        this.width = width;
-        this.height = height;
-        this.color = color;
-        this.basePower = power;
         this.dir = 0;
-        this.alpha = 1;
-        this.startupTime = 45;
-        this.startedUp = false;
-        this.shutdownTime = 45;
-        this.shutdownCounter = 0;
-        this.startupCounter = 0;
-        this.minAlpha = 0.2;
+        this.dead = false;
         this.hp = 1;
+        this.alpha = 1;
     }
 
     public update():void {
@@ -51,20 +45,7 @@ export class Entity {
         this.vy += this.ay;
         this.x += this.vx;
         this.y += this.vy;
-    }
-
-    public init() {
-        this.vx = 0;
-        this.vy = 0;
-        this.ax = 0;
-        this.ay = 0;
-        this.startedUp = false;
-        this.startupCounter = 0;
-        this.shutdownCounter = 0;
-        this.dir = 0;
-        this.dead = false;
-        this.hp = 1;
-    }
+    }   
 
     public damage(amount:number) {
         this.hp -= amount;
@@ -147,8 +128,7 @@ export class Entity {
             ctx.stroke();
         
         }
-        
-        
+                
         ctx.restore();
     }
 
@@ -158,5 +138,35 @@ export class Entity {
             this.renderSquare(ctx,drawFill);
         }
         
+    }
+}
+
+
+export class EntityPool {
+    private entities:Array<Entity>;
+
+    constructor() {
+        this.entities = [];
+    }
+
+    public getEntity(x:number=0,y:number=0,width:number=32,height:number=32,color:string="white"):Entity {
+        let e:Entity;
+        if (this.entities.length > 0) {
+            e = this.entities.pop();
+        } else {
+            e = new Entity();
+        }
+        e.init(x,y,width,height,color);;
+        return e;
+    }
+
+    public recycleEntity(e:Entity) {
+        this.entities.push(e);
+    }
+    
+    public recycle(arr:Array<Entity>) {
+        arr.forEach((e) => {
+            this.entities.push(e);
+        });
     }
 }
