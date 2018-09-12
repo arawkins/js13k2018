@@ -92,42 +92,14 @@ export class GameState extends State {
         this.waveCounter++;
         if(this.waveCounter >= this.waveInterval) {
             this.waveCounter = 0;
-            let side:number = Math.random();
-            let w:Wave = new Wave(this.width+100, 100+Math.random()*100, 0, 1+Math.random()*this.player.speed, this.enemyPool, 1);
-            this.terrain.forEach((t) => {
-                while(w.y > t.y - t.height/2 && w.y < t.y + t.height/2) {
-                    w.y += 50;
-                }
-            })
-            let distance = 3+Math.random()*this.player.speed;
-            w.move(180, 2+Math.random()*2, distance);
-            w.fire();
-            if(side > 0.5) {
-                w.move(90,1+Math.random()*1, 2+Math.random()*this.player.speed);
-            } else {
-                w.move(270,1+Math.random()*1, 2+Math.random()*this.player.speed);
-            }
-            w.fire();
-            w.move(0,4, distance);
-            this.enemyWaves.push(w);
-            this.waveInterval -= 25;
-            if(this.waveInterval <= 300) {
-                this.waveInterval += Math.random()*100+100 - this.player.speed * 5;
-            }
+            this.spawnWave();
             
         }
 
         this.terrainCounter++;
         if(this.terrainCounter > this.terrainInterval) {
             this.terrainCounter = 0;
-            this.terrainInterval -= 100;
-            if(this.terrainInterval <= 500) {
-                this.terrainInterval += Math.random() * 200 - this.player.speed * 10;
-            }
-            let tWidth=400 + Math.random() * 1350 ;
-            let tHeight = 50 + Math.random() * 150;
-            let t:Entity = new Entity(this.width + tWidth, Math.random()*this.height, tWidth, tHeight, "#999999");
-            this.terrain.push(t);
+            this.spawnTerrain();
         }
 
         this.terrain.forEach((t, index) => {
@@ -136,7 +108,7 @@ export class GameState extends State {
                 this.player.damage(1);
             }
             if(t.x < -t.width) {
-                this.terrain.splice(index,1);
+                this.entityPool.recycle(this.terrain.splice(index,1));
             }
             this.shrapnel.forEach((s,index) => {
                 if(s.collide(t)) {
@@ -221,6 +193,10 @@ export class GameState extends State {
                 this.player.x = this.player.width;
                 this.player.vx = 0;
                 this.player.ax = 0;
+            } else if (this.player.x >= this.width - this.player.width) {
+                this.player.vx = 0;
+                this.player.ax = 0;
+                this.player.x = this.width-this.player.width;
             }
             if(this.player.y <= this.player.height) {
                 this.player.y = this.player.height;
@@ -230,7 +206,6 @@ export class GameState extends State {
                 this.player.y = this.height - this.player.height;
                 this.player.vy = 0;
                 this.player.ay = 0;
-            
             }
         }
         
@@ -370,6 +345,42 @@ export class GameState extends State {
         }
 
         this.kb.update();
+    }
+
+    public spawnWave():void {
+        let side:number = Math.random();
+        let startY:number = 100+Math.random()*100;
+        let turnDir:number = 90;
+        if(side > 0.5) {
+            startY = this.height - 100 - Math.random() * 100;
+            turnDir = 270
+        }
+        let w:Wave = new Wave(this.width+100,startY , 0, 1+Math.random()*this.player.speed, this.enemyPool);
+        let distance = 3+Math.random()*this.player.speed;
+        w.move(180, 2+Math.random()*2, distance);
+        w.fire();
+        w.move(turnDir,1+Math.random()*1, 2+Math.random()*this.player.speed);
+        w.fire();
+        w.move(0,4, distance);
+        this.enemyWaves.push(w);
+        this.waveInterval -= 25;
+        if(this.waveInterval <= 300) {
+            this.waveInterval += Math.random()*100+100 - this.player.speed * 5;
+        } 
+    }
+
+    public spawnTerrain():void {
+        this.terrainInterval -= 100;
+        if(this.terrainInterval <= 500) {
+            this.terrainInterval += Math.random() * 200 - this.player.speed * 10;
+            if (this.terrainInterval <= 100) {
+                this.terrainInterval = 100;
+            }
+        }
+        let tWidth=400 + Math.random() * 1350 ;
+        let tHeight = 50 + Math.random() * 150;
+        let t:Entity = this.entityPool.getEntity(this.width + tWidth, 200 + Math.random()*(this.height-400), tWidth, tHeight, "#999999");
+        this.terrain.push(t);
     }
 
 
